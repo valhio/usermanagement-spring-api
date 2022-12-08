@@ -1,30 +1,27 @@
-package com.github.valhio.api.models;
+package com.github.valhio.api.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.io.Serializable;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Set;
 
 import static jakarta.persistence.FetchType.EAGER;
-import static jakarta.persistence.GenerationType.IDENTITY;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class User {
+public class User implements Serializable {
     @Id
-    @GeneratedValue(strategy = IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(nullable = false, updatable = false)
     private Long id;
     private String userId;
     private String firstName;
@@ -39,10 +36,9 @@ public class User {
     private Date lastLoginDateDisplay;
     private Date joinDate;
     private boolean isActive;
-    private boolean isNotLocked;
+    private boolean isNotLocked; // Is the user's account verified via email?
+    private String role;
+    @ElementCollection(fetch = EAGER) // Eager fetches the authorities when the user is fetched, lazy fetches them when they are accessed
+    private Set<String> authorities = new HashSet<>();
 
-//    @ManyToMany(fetch = EAGER)
-//    private Collection<Role> roles = new HashSet<>();
-
-//    private Collection<Role> authorities = new HashSet<>();
 }
