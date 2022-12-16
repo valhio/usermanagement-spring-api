@@ -13,6 +13,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.List;
@@ -24,13 +25,13 @@ import static java.util.Arrays.stream;
 /*
 *   This class is used to generate and validate JWT tokens.
 * */
-
+@Component
 public class JWTTokenProvider {
 
     @Value("${jwt.secret}")
     private String secretKey;
 
-    public String generateJWTToken(UserPrincipal userPrincipal) {
+    public String generateJwtToken(UserPrincipal userPrincipal) {
         String[] claims = getClaimsFromUser(userPrincipal);
         return JWT.create()
                 .withIssuer(KBDA_LLC) // Who created the token
