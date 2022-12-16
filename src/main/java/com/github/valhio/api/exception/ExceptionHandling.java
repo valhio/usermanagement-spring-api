@@ -78,7 +78,8 @@ public class ExceptionHandling  {
     }
 
     @ExceptionHandler(LockedException.class)
-    public ResponseEntity<HttpResponse> lockedException() {
+    public ResponseEntity<HttpResponse> lockedException(LockedException e) {
+        System.out.println(e);
         return createHttpResponse(UNAUTHORIZED, ACCOUNT_LOCKED);
     }
 
