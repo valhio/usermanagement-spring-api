@@ -1,27 +1,37 @@
 package com.github.valhio.api.controller;
 
 import com.github.valhio.api.domain.HttpResponse;
+import com.github.valhio.api.enumeration.Role;
 import com.github.valhio.api.exception.ExceptionHandling;
 import com.github.valhio.api.exception.domain.EmailExistException;
+import com.github.valhio.api.exception.domain.PasswordNotMatchException;
 import com.github.valhio.api.exception.domain.UsernameExistException;
 import com.github.valhio.api.model.User;
 import com.github.valhio.api.model.UserPrincipal;
 import com.github.valhio.api.service.UserService;
 import com.github.valhio.api.utility.JWTTokenProvider;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
+import java.util.Set;
 
+import static com.github.valhio.api.constant.FileConstant.TEMP_PROFILE_IMAGE_BASE_URL;
 import static com.github.valhio.api.constant.SecurityConstant.JWT_TOKEN_HEADER;
+import static org.springframework.http.MediaType.IMAGE_JPEG_VALUE;
 
 @RestController
 @RequestMapping(path = {"/api/v1/user"})
@@ -51,7 +61,7 @@ public class UserController extends ExceptionHandling {
 
     // return response entity with jwt header
     @PostMapping("/login")
-    public ResponseEntity<HttpResponse> login(@RequestBody User user) {
+    public ResponseEntity<HttpResponse> login(@RequestBody User user) throws UsernameExistException {
         authenticate(user.getUsername(), user.getPassword());
         User logged = userService.findUserByUsername(user.getUsername());
         UserPrincipal userPrincipal = new UserPrincipal(logged);
@@ -68,173 +78,196 @@ public class UserController extends ExceptionHandling {
                         .build());
     }
 
-//    @PostMapping("/add")
-//    public ResponseEntity<HttpResponse> addNewUser(@RequestBody User user) throws UsernameExistException, EmailExistException, IllegalArgumentException {
-//        User registered = userService.addNewUser(user);
-//        return ResponseEntity.ok(HttpResponse.builder()
-//                .timeStamp(new Date())
-//                .data(Map.of("user", registered))
-//                .message("User added successfully")
-//                .status(HttpStatus.OK)
-//                .statusCode(HttpStatus.OK.value())
-//                .build());
-//    }
-//
-//    @GetMapping("/find/{username}")
-//    public ResponseEntity<HttpResponse> findUserByUsername(@PathVariable("username") String username) {
-//        User user = userService.findUserByUsername(username);
-//        return ResponseEntity.ok(HttpResponse.builder()
-//                .timeStamp(new Date())
-//                .data(Map.of("user", user))
-//                .message("User retrieved successfully")
-//                .status(HttpStatus.OK)
-//                .statusCode(HttpStatus.OK.value())
-//                .build());
-//    }
-//
-//    @GetMapping("/find/email/{email}")
-//    public ResponseEntity<HttpResponse> findUserByEmail(@PathVariable("email") String email) {
-//        User user = userService.findUserByEmail(email);
-//        return ResponseEntity.ok(HttpResponse.builder()
-//                .timeStamp(new Date())
-//                .data(Map.of("user", user))
-//                .message("User retrieved successfully")
-//                .status(HttpStatus.OK)
-//                .statusCode(HttpStatus.OK.value())
-//                .build());
-//    }
-//
-//    @GetMapping("/list")
-//    public ResponseEntity<HttpResponse> getUsers() {
-//        return ResponseEntity.ok(HttpResponse.builder()
-//                .timeStamp(new Date())
-//                .data(Map.of("users", userService.getUsers()))
-//                .message("Users retrieved successfully")
-//                .status(HttpStatus.OK)
-//                .statusCode(HttpStatus.OK.value())
-//                .build());
-//    }
-//
-//    @PostMapping("/update")
-//    public ResponseEntity<HttpResponse> update(@RequestBody User user) {
-//        User updated = userService.update(user);
-//        return ResponseEntity.ok(HttpResponse.builder()
-//                .timeStamp(new Date())
-//                .data(Map.of("user", updated))
-//                .message("User updated successfully")
-//                .status(HttpStatus.OK)
-//                .statusCode(HttpStatus.OK.value())
-//                .build());
-//    }
-//
-//    @DeleteMapping("/delete/{id}")
-//    public ResponseEntity<HttpResponse> delete(@PathVariable("id") Long id) {
-//        userService.delete(id);
-//        return ResponseEntity.ok(HttpResponse.builder()
-//                .timeStamp(new Date())
-//                .data(Map.of("id", id))
-//                .message("User deleted successfully")
-//                .status(HttpStatus.OK)
-//                .statusCode(HttpStatus.OK.value())
-//                .build());
-//    }
-//
-//    @GetMapping("/reset-password/{email}")
-//    public ResponseEntity<HttpResponse> resetPassword(@PathVariable("email") String email) {
-//        userService.resetPassword(email);
-//        return ResponseEntity.ok(HttpResponse.builder()
-//                .timeStamp(new Date())
-//                .data(Map.of("email", email))
-//                .message("Password reset successfully")
-//                .status(HttpStatus.OK)
-//                .statusCode(HttpStatus.OK.value())
-//                .build());
-//    }
-//
-//    @PostMapping("/update-profile-image")
-//    public ResponseEntity<HttpResponse> updateProfileImage(@RequestParam("username") String username,
-//                                                           @RequestParam("profileImage") MultipartFile profileImage) throws IOException {
-//        userService.updateProfileImage(username, profileImage);
-//        return ResponseEntity.ok(HttpResponse.builder()
-//                .timeStamp(new Date())
-//                .data(Map.of("username", username, "profileImage", profileImage))
-//                .message("Profile image updated successfully")
-//                .status(HttpStatus.OK)
-//                .statusCode(HttpStatus.OK.value())
-//                .build());
-//    }
-//
-//    @GetMapping("/image/{username}/{fileName}")
-//    public byte[] getProfileImage(@PathVariable("username") String username, @PathVariable("fileName") String fileName) throws IOException {
-//        return userService.getProfileImage(username, fileName);
-//    }
-//
-//    @GetMapping("/image/{username}")
-//    public byte[] getTemporaryProfileImage(@PathVariable("username") String username) throws IOException {
-//        return userService.getTemporaryProfileImage(username);
-//    }
-//
-//    @PostMapping("/update-password")
-//    public ResponseEntity<HttpResponse> updatePassword(@RequestBody Map<String, Object> passwordData) {
-//        userService.updatePassword(passwordData);
-//        return ResponseEntity.ok(HttpResponse.builder()
-//                .timeStamp(new Date())
-//                .data(Map.of("passwordData", passwordData))
-//                .message("Password updated successfully")
-//                .status(HttpStatus.OK)
-//                .statusCode(HttpStatus.OK.value())
-//                .build());
-//    }
-//
-//    @PostMapping("/update-email")
-//    public ResponseEntity<HttpResponse> updateEmail(@RequestBody Map<String, Object> emailData) {
-//        userService.updateEmail(emailData);
-//        return ResponseEntity.ok(HttpResponse.builder()
-//                .timeStamp(new Date())
-//                .data(Map.of("emailData", emailData))
-//                .message("Email updated successfully")
-//                .status(HttpStatus.OK)
-//                .statusCode(HttpStatus.OK.value())
-//                .build());
-//    }
-//
-//    @PostMapping("/update-username")
-//    public ResponseEntity<HttpResponse> updateUsername(@RequestBody Map<String, Object> usernameData) {
-//        userService.updateUsername(usernameData);
-//        return ResponseEntity.ok(HttpResponse.builder()
-//                .timeStamp(new Date())
-//                .data(Map.of("usernameData", usernameData))
-//                .message("Username updated successfully")
-//                .status(HttpStatus.OK)
-//                .statusCode(HttpStatus.OK.value())
-//                .build());
-//    }
-//
-//    @GetMapping("/user/{username}")
-//    public ResponseEntity<HttpResponse> getUser(@PathVariable("username") String username) {
-//        User user = userService.getUser(username);
-//        return ResponseEntity.ok(HttpResponse.builder()
-//                .timeStamp(new Date())
-//                .data(Map.of("user", user))
-//                .message("User retrieved successfully")
-//                .status(HttpStatus.OK)
-//                .statusCode(HttpStatus.OK.value())
-//                .build());
-//    }
-//
-//    @GetMapping("/user/{username}/role")
-//    public ResponseEntity<HttpResponse> getUserRole(@PathVariable("username") String username) {
-//        List<Role> roles = userService.getUserRoles(username);
-//        return ResponseEntity.ok(HttpResponse.builder()
-//                .timeStamp(new Date())
-//                .data(Map.of("roles", roles))
-//                .message("User roles retrieved successfully")
-//                .status(HttpStatus.OK)
-//                .statusCode(HttpStatus.OK.value())
-//                .build());
-//    }
-//
-//    @PostMapping("/add-role")
+    @PostMapping(path = "/add")
+    public ResponseEntity<HttpResponse> addNewUser(@RequestPart("user") User user, @RequestPart("profileImage") MultipartFile profileImage) throws UsernameExistException, EmailExistException, IllegalArgumentException, IOException {
+        User registered = userService.addNewUser(user, profileImage);
+        return ResponseEntity.ok(HttpResponse.builder()
+                .timeStamp(new Date())
+                .data(Map.of("user", registered))
+                .message("User added successfully")
+                .status(HttpStatus.OK)
+                .statusCode(HttpStatus.OK.value())
+                .build());
+    }
+
+    @GetMapping("/{username}")
+    public ResponseEntity<HttpResponse> findUserByUsername(@PathVariable("username") String username) throws UsernameExistException {
+        User user = userService.findUserByUsername(username);
+        return ResponseEntity.ok(HttpResponse.builder()
+                .timeStamp(new Date())
+                .data(Map.of("user", user))
+                .message("User retrieved successfully")
+                .status(HttpStatus.OK)
+                .statusCode(HttpStatus.OK.value())
+                .build());
+    }
+
+    @GetMapping("/email/{email}")
+    public ResponseEntity<HttpResponse> findUserByEmail(@PathVariable("email") String email) {
+        User user = userService.findUserByEmail(email);
+        return ResponseEntity.ok(HttpResponse.builder()
+                .timeStamp(new Date())
+                .data(Map.of("user", user))
+                .message("User retrieved successfully")
+                .status(HttpStatus.OK)
+                .statusCode(HttpStatus.OK.value())
+                .build());
+    }
+
+    @GetMapping("/list")
+    public ResponseEntity<HttpResponse> getUsers() {
+        return ResponseEntity.ok(HttpResponse.builder()
+                .timeStamp(new Date())
+                .data(Map.of("users", userService.getUsers()))
+                .message("Users retrieved successfully")
+                .status(HttpStatus.OK)
+                .statusCode(HttpStatus.OK.value())
+                .build());
+    }
+
+    @PostMapping("/update")
+    public ResponseEntity<HttpResponse> update(@RequestParam String username, @RequestBody User user) throws EmailExistException, UsernameExistException {
+        User updated = userService.update(username, user);
+        return ResponseEntity.ok(HttpResponse.builder()
+                .timeStamp(new Date())
+                .data(Map.of("user", updated))
+                .message("User updated successfully")
+                .status(HttpStatus.OK)
+                .statusCode(HttpStatus.OK.value())
+                .build());
+    }
+
+    @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasAnyAuthority('DELETE')")
+    public ResponseEntity<HttpResponse> delete(@PathVariable("id") Long id) {
+        userService.delete(id);
+        return ResponseEntity.ok(HttpResponse.builder()
+                .timeStamp(new Date())
+                .message("User deleted successfully")
+                .status(HttpStatus.OK)
+                .statusCode(HttpStatus.OK.value())
+                .build());
+    }
+
+    @GetMapping("/reset-password/{email}")
+    public ResponseEntity<HttpResponse> resetPassword(@PathVariable("email") String email) {
+        userService.resetPassword(email);
+        return ResponseEntity.ok(HttpResponse.builder()
+                .timeStamp(new Date())
+                .data(Map.of("email", email))
+                .message("Password reset successfully")
+                .status(HttpStatus.OK)
+                .statusCode(HttpStatus.OK.value())
+                .build());
+    }
+
+    @PostMapping("/update-profile-image")
+    public ResponseEntity<HttpResponse> updateProfileImage(@RequestParam("username") String username,
+                                                           @RequestParam("profileImage") MultipartFile profileImage) throws IOException, UsernameExistException {
+        userService.updateProfileImage(username, profileImage);
+        return ResponseEntity.ok(HttpResponse.builder()
+                .timeStamp(new Date())
+                .data(Map.of("username", username, "profileImage", profileImage))
+                .message("Profile image updated successfully")
+                .status(HttpStatus.OK)
+                .statusCode(HttpStatus.OK.value())
+                .build());
+    }
+
+    @GetMapping(path = "/image/{username}", produces = IMAGE_JPEG_VALUE)
+    public byte[] getProfileImage(@PathVariable("username") String username) {
+        return userService.getProfileImage(username);
+    }
+
+    @GetMapping(path = "/image/profile/{username}", produces = IMAGE_JPEG_VALUE)
+    public byte[] getTempProfileImage(@PathVariable("username") String username) throws IOException {
+        URL url = new URL(TEMP_PROFILE_IMAGE_BASE_URL + username);
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try (InputStream inputStream = url.openStream()) {
+            int bytesRead;
+            byte[] chunk = new byte[1024];
+            while ((bytesRead = inputStream.read(chunk)) > 0) {
+                byteArrayOutputStream.write(chunk, 0, bytesRead);
+            }
+        }
+        return byteArrayOutputStream.toByteArray();
+    }
+
+    @PostMapping("/update-password")
+    public ResponseEntity<HttpResponse> updatePassword(@RequestParam @NotBlank String username,
+                                                       @RequestParam @NotBlank String currentPassword,
+                                                       @RequestParam @NotBlank String newPassword) throws PasswordNotMatchException {
+        userService.updatePassword(username, currentPassword, newPassword);
+        return ResponseEntity.ok(HttpResponse.builder()
+                .timeStamp(new Date())
+                .message("Password updated successfully")
+                .status(HttpStatus.OK)
+                .statusCode(HttpStatus.OK.value())
+                .build());
+    }
+
+    @PostMapping("/update-email")
+    public ResponseEntity<HttpResponse> updateEmail(@RequestParam @NotBlank String username,
+                                                    @RequestParam @NotBlank String currentPassword,
+                                                    @RequestParam @NotBlank String newEmail) throws EmailExistException, PasswordNotMatchException {
+        userService.updateEmail(username, currentPassword, newEmail);
+        return ResponseEntity.ok(HttpResponse.builder()
+                .timeStamp(new Date())
+                .message("Email updated successfully")
+                .status(HttpStatus.OK)
+                .statusCode(HttpStatus.OK.value())
+                .build());
+    }
+
+    @PostMapping("/update-username")
+    public ResponseEntity<HttpResponse> updateUsername(@RequestParam @NotBlank String currentUsername,
+                                                       @RequestParam @NotBlank String newUsername) throws UsernameExistException {
+        userService.updateUsername(currentUsername, newUsername);
+        return ResponseEntity.ok(HttpResponse.builder()
+                .timeStamp(new Date())
+                .message("Username updated successfully")
+                .status(HttpStatus.OK)
+                .statusCode(HttpStatus.OK.value())
+                .build());
+    }
+
+    @GetMapping("/{username}/role")
+    public ResponseEntity<HttpResponse> getUserRole(@PathVariable("username") String username) {
+        Role role = userService.getUserRole(username);
+        return ResponseEntity.ok(HttpResponse.builder()
+                .timeStamp(new Date())
+                .data(Map.of("role", role))
+                .message("User role retrieved successfully")
+                .status(HttpStatus.OK)
+                .statusCode(HttpStatus.OK.value())
+                .build());
+    }
+
+    @GetMapping("/{username}/authority")
+    public ResponseEntity<HttpResponse> getUserAuthority(@PathVariable("username") String username) {
+        Set<String> authorities = userService.getUserAuthorities(username);
+        return ResponseEntity.ok(HttpResponse.builder()
+                .timeStamp(new Date())
+                .data(Map.of("authorities", authorities))
+                .message("User authorities retrieved successfully")
+                .status(HttpStatus.OK)
+                .statusCode(HttpStatus.OK.value())
+                .build());
+    }
+
+    @GetMapping("/list/role")
+    public ResponseEntity<HttpResponse> getAllUsersByRole(@RequestParam String role) {
+        Collection<User> users = userService.getUsersByRole(role);
+        return ResponseEntity.ok(HttpResponse.builder()
+                .timeStamp(new Date())
+                .data(Map.of("users", users))
+                .message("Users retrieved successfully")
+                .status(HttpStatus.OK)
+                .statusCode(HttpStatus.OK.value())
+                .build());
+    }
+
+    //    @PostMapping("/add-role")
 //    public ResponseEntity<HttpResponse> addRoleToUser(@RequestBody Map<String, Object> roleData) {
 //        userService.addRoleToUser(roleData);
 //        return ResponseEntity.ok(HttpResponse.builder()
@@ -257,18 +290,6 @@ public class UserController extends ExceptionHandling {
 //                .statusCode(HttpStatus.OK.value())
 //                .build());
 //    }
-//
-//    @GetMapping("/list/{role}")
-//    public ResponseEntity<HttpResponse> getAllUsersByRole(@PathVariable("role") String role) {
-//        List<User> users = userService.getUsersByRole(role);
-//        return ResponseEntity.ok(HttpResponse.builder()
-//                .timeStamp(new Date())
-//                .data(Map.of("users", users))
-//                .message("Users retrieved successfully")
-//                .status(HttpStatus.OK)
-//                .statusCode(HttpStatus.OK.value())
-//                .build());
-//    }
 
     private HttpHeaders getJwtHeader(UserPrincipal user) {
         HttpHeaders headers = new HttpHeaders();
@@ -285,6 +306,4 @@ public class UserController extends ExceptionHandling {
         // If the user is authenticated, the method returns and the user is logged in.
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
     }
-
-
 }
