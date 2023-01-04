@@ -231,16 +231,6 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     private void saveProfileImage(User user, MultipartFile profileImage) throws IOException, UsernameExistException {
-        // Simplified version of the method
-        if (profileImage != null) {
-            Path userFolder = Paths.get(USER_FOLDER + user.getUsername()).toAbsolutePath().normalize();
-            if (!Files.exists(userFolder)) Files.createDirectories(userFolder);
-            Files.deleteIfExists(Paths.get(userFolder + user.getUsername() + DOT + JPG_EXTENSION));
-            Files.copy(profileImage.getInputStream(), userFolder.resolve(user.getUsername() + DOT + JPG_EXTENSION), StandardCopyOption.REPLACE_EXISTING);
-            user.setProfileImageUrl(getProfileImageUrl(user.getUsername()));
-            userRepository.save(user);
-        }
-
 //        if (profileImage != null) {
 //            Path userFolder = Paths.get(USER_FOLDER + user.getUsername()).toAbsolutePath().normalize(); // Ex.: /home/user/user-api/users/*username*
 //
@@ -262,6 +252,16 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 //            userRepository.save(user);
 //            log.info(FILE_SAVED_IN_FILE_SYSTEM + profileImage.getOriginalFilename());
 //        }
+
+        // Simplified version of the method
+        if (profileImage != null) {
+            Path userFolder = Paths.get(USER_FOLDER + user.getUsername()).toAbsolutePath().normalize();
+            if (!Files.exists(userFolder)) Files.createDirectories(userFolder);
+            Files.deleteIfExists(Paths.get(userFolder + user.getUsername() + DOT + JPG_EXTENSION));
+            Files.copy(profileImage.getInputStream(), userFolder.resolve(user.getUsername() + DOT + JPG_EXTENSION), StandardCopyOption.REPLACE_EXISTING);
+            user.setProfileImageUrl(getProfileImageUrl(user.getUsername()));
+            userRepository.save(user);
+        }
     }
 
     private String getProfileImageUrl(String username) throws UsernameExistException {
@@ -289,14 +289,14 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     private void validateEmail(String email) throws EmailExistException, IllegalArgumentException {
         validateString(email);
         if (userRepository.existsByEmail(email)) {
-            throw new EmailExistException("Email already exist");
+            throw new EmailExistException(EMAIL_ALREADY_EXISTS);
         }
     }
 
     private void validateUsername(String username) throws UsernameExistException, IllegalArgumentException {
         validateString(username);
         if (userRepository.existsByUsername(username)) {
-            throw new UsernameExistException("Username already exist");
+            throw new UsernameExistException(USERNAME_ALREADY_EXISTS);
         }
     }
 
