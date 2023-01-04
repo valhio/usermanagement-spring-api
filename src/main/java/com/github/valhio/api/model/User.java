@@ -2,24 +2,15 @@ package com.github.valhio.api.model;
 
 import com.github.valhio.api.enumeration.Role;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.validator.constraints.Length;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
-
-import static jakarta.persistence.FetchType.EAGER;
 
 @Getter
 @Setter
@@ -35,27 +26,29 @@ public class User implements Serializable {
 
     private String username;
 
-//    @NotNull(message = "Password cannot be empty")
+    //    @NotNull(message = "Password cannot be empty")
 //    @Length(min = 7, message = "Password should be atleast 7 characters long")
     private String password;
 
-//    @NotNull(message = "First Name cannot be empty")
+    //    @NotNull(message = "First Name cannot be empty")
     @Column(name = "first_name")
     private String firstName;
 
     @Column(name = "middle_name")
     private String middleName;
 
-//    @NotNull(message = "Last Name cannot be empty")
+    //    @NotNull(message = "Last Name cannot be empty")
     @Column(name = "last_name")
     private String lastName;
 
-//    @NotNull(message = "Email cannot be empty")
+    //    @NotNull(message = "Email cannot be empty")
 //    @Email(message = "Please enter a valid email address")
     private String email;
 
-//    @Length(min = 10, message = "Password should be atleast 10 number long")
+    //    @Length(min = 10, message = "Password should be atleast 10 number long")
     private String phone;
+
+    private Boolean acceptedTerms;
 
     private String profileImageUrl;
 
@@ -76,7 +69,7 @@ public class User implements Serializable {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-//    @ElementCollection(fetch = EAGER) // Eager fetches the authorities when the user is fetched, lazy fetches them when they are accessed
+    //    @ElementCollection(fetch = EAGER) // Eager fetches the authorities when the user is fetched, lazy fetches them when they are accessed
     private String[] authorities;
 
 }
