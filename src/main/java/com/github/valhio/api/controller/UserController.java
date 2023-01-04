@@ -61,7 +61,7 @@ public class UserController extends ExceptionHandling {
 
     // return response entity with jwt header
     @PostMapping("/login")
-    public ResponseEntity<HttpResponse> login(@RequestBody User user) throws UsernameExistException {
+    public ResponseEntity<User> login(@RequestBody User user) throws UsernameExistException {
         authenticate(user.getUsername(), user.getPassword());
         User logged = userService.findUserByUsername(user.getUsername());
         UserPrincipal userPrincipal = new UserPrincipal(logged);
@@ -69,13 +69,7 @@ public class UserController extends ExceptionHandling {
 
         return ResponseEntity.ok()
                 .headers(jwtHeader)
-                .body(HttpResponse.builder()
-                        .timeStamp(new Date())
-                        .data(Map.of("user", logged))
-                        .message("User logged in successfully")
-                        .status(HttpStatus.OK)
-                        .statusCode(HttpStatus.OK.value())
-                        .build());
+                .body(logged);
     }
 
     @PostMapping(path = "/add")
