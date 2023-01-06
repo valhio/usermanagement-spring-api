@@ -124,11 +124,11 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         if (!userByUsername.getUsername().equals(user.getUsername())) validateUsername(user.getUsername());
         if (!userByUsername.getEmail().equals(user.getEmail())) validateEmail(user.getEmail());
 
-        userByUsername.setFirstName(user.getFirstName());
-        userByUsername.setLastName(user.getLastName());
-        userByUsername.setUsername(user.getUsername());
-        userByUsername.setEmail(user.getEmail());
-        userByUsername.setRole(user.getRole());
+        userByUsername.setFirstName(user.getFirstName().trim().length() == 0 ? userByUsername.getFirstName() : user.getFirstName());
+        userByUsername.setLastName(user.getLastName().trim().length() == 0 ? userByUsername.getLastName() : user.getLastName());
+        userByUsername.setUsername(user.getUsername().trim().length() == 0 ? userByUsername.getUsername() : user.getUsername());
+        userByUsername.setEmail(user.getEmail().trim().length() == 0 ? userByUsername.getEmail() : user.getEmail());
+        userByUsername.setRole(user.getRole().name().trim().length() == 0 ? userByUsername.getRole() : user.getRole());
         userByUsername.setAuthorities(user.getRole().getAuthorities());
         userByUsername.setActive(user.isActive());
         userByUsername.setNotLocked(user.isNotLocked());
