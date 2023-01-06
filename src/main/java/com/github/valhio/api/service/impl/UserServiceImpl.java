@@ -111,7 +111,6 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         user.setNotLocked(true);
         user.setRole(user.getRole() == null ? ROLE_USER : user.getRole());
         user.setAuthorities(user.getRole().getAuthorities());
-        user.setProfileImageUrl(getTemporaryProfileImageUrl(user.getFirstName()));
         saveProfileImage(user, profileImage);
         return userRepository.save(user);
     }
@@ -255,12 +254,15 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
         // Simplified version of the method
         if (profileImage != null) {
-            Path userFolder = Paths.get(USER_FOLDER + user.getUsername()).toAbsolutePath().normalize();
+            Path userFolder = Paths.get(USER_FOLDER + user.getUsername()).toAbsolutePath().normalize(); //
             if (!Files.exists(userFolder)) Files.createDirectories(userFolder);
             Files.deleteIfExists(Paths.get(userFolder + user.getUsername() + DOT + JPG_EXTENSION));
             Files.copy(profileImage.getInputStream(), userFolder.resolve(user.getUsername() + DOT + JPG_EXTENSION), StandardCopyOption.REPLACE_EXISTING);
             user.setProfileImageUrl(getProfileImageUrl(user.getUsername()));
             userRepository.save(user);
+        } else {
+            // If the user doesn't upload a profile image, we set the default profile image
+            user.setProfileImageUrl(getTemporaryProfileImageUrl(user.getUsername()));
         }
     }
 
@@ -278,8 +280,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     private String getTemporaryProfileImageUrl(String firstName) {
-//        return "https://robohash.org/" + firstName + "?set=set3";
-        return ServletUriComponentsBuilder.fromCurrentContextPath().path(DEFAULT_USER_IMAGE_PATH + firstName).toUriString();
+        return "https://robohash.org/" + firstName + "?set=set3";
+//        return ServletUriComponentsBuilder.fromCurrentContextPath().path(DEFAULT_USER_IMAGE_PATH + firstName).toUriString();
     }
 
     private String encodePassword(String password) {
