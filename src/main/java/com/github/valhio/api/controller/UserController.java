@@ -123,9 +123,11 @@ public class UserController extends ExceptionHandling {
                 .build());
     }
 
-    @PostMapping("/update")
-    public ResponseEntity<HttpResponse> update(@RequestParam String username, @RequestBody User user) throws EmailExistException, UsernameExistException {
-        User updated = userService.update(username, user);
+    @PostMapping("/update/{originalUsername}")
+    public ResponseEntity<HttpResponse> update(@RequestPart(value = "profileImage", required = false) MultipartFile profileImage, @RequestParam String user, @PathVariable String originalUsername) throws EmailExistException, UsernameExistException, IOException, NotAnImageFileException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        User newUser = objectMapper.readValue(user, User.class);
+        User updated = userService.update(newUser, profileImage, originalUsername);
         return ResponseEntity.ok(HttpResponse.builder()
                 .timeStamp(new Date())
                 .data(Map.of("user", updated))

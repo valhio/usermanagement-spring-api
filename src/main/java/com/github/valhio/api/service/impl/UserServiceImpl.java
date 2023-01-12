@@ -120,22 +120,51 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
-    public User update(String username, User user) throws UsernameNotFoundException, UsernameExistException, EmailExistException {
-        User userByUsername = this.findUserByUsername(username);
-        if (userByUsername == null) throw new UsernameNotFoundException("User not found with username: " + username);
+    public User update(User newUser, MultipartFile newProfileImage, String originalUsername) throws UsernameNotFoundException, UsernameExistException, EmailExistException, IOException, NotAnImageFileException {
+        User userByUsername = this.findUserByUsername(originalUsername);
+        if (userByUsername == null)
+            throw new UsernameNotFoundException("User not found with username: " + originalUsername);
 
-        if (!userByUsername.getUsername().equals(user.getUsername())) validateUsername(user.getUsername());
-        if (!userByUsername.getEmail().equals(user.getEmail())) validateEmail(user.getEmail());
+        if (!userByUsername.getUsername().equals(newUser.getUsername())) validateUsername(newUser.getUsername());
+        if (!userByUsername.getEmail().equals(newUser.getEmail())) validateEmail(newUser.getEmail());
 
-        userByUsername.setFirstName(user.getFirstName().trim().length() == 0 ? userByUsername.getFirstName() : user.getFirstName());
-        userByUsername.setLastName(user.getLastName().trim().length() == 0 ? userByUsername.getLastName() : user.getLastName());
-        userByUsername.setUsername(user.getUsername().trim().length() == 0 ? userByUsername.getUsername() : user.getUsername());
-        userByUsername.setEmail(user.getEmail().trim().length() == 0 ? userByUsername.getEmail() : user.getEmail());
-        userByUsername.setRole(user.getRole().name().trim().length() == 0 ? userByUsername.getRole() : user.getRole());
-        userByUsername.setAuthorities(user.getRole().getAuthorities());
-        userByUsername.setActive(user.isActive());
-        userByUsername.setNotLocked(user.isNotLocked());
+        // Map the new user to the old user.
+        userByUsername.setFirstName(newUser.getFirstName());
+        userByUsername.setLastName(newUser.getLastName());
+        userByUsername.setUsername(newUser.getUsername());
+        userByUsername.setEmail(newUser.getEmail());
+        userByUsername.setPhone(newUser.getPhone());
+        userByUsername.setAddress(newUser.getAddress());
+        userByUsername.setRole(newUser.getRole());
+        userByUsername.setAuthorities(newUser.getRole().getAuthorities());
+        userByUsername.setActive(newUser.isActive());
+        userByUsername.setNotLocked(newUser.isNotLocked());
+        userByUsername.setUpdatedAt(LocalDateTime.now());
+
+        // The following code is a simplified version of the code below it.
+        if (newProfileImage == null)
+            newProfileImage = getProfileImageAsMultipartFile(originalUsername); // If the user didn't upload a new profile image, then use the old one.
+        saveProfileImageMultipartFile(userByUsername, newProfileImage); // this method will delete the old profile image, if it exists, and save the new one.
+        if (!newUser.getUsername().equals(originalUsername))
+            deleteProfileImage(originalUsername); // If the user changed his username, then delete the old profile image and the folder that contains it.
+
         return userRepository.save(userByUsername);
+/*
+        if (!newUser.getUsername().equals(originalUsername)) { // If the user changes his username
+            if (newProfileImage != null) { // We then check if he has a new profile image, if so, we save it and delete the old one.
+                saveProfileImageMultipartFile(userByUsername, newProfileImage);
+            } else { // If the user hasn't given a new profile image, we just save the old one with the new username and delete the old one.
+                File oldProfileImage = new File( USER_FOLDER + originalUsername + FORWARD_SLASH + originalUsername + DOT + JPG_EXTENSION);
+                saveProfileImageFile(userByUsername, oldProfileImage);
+            }
+            deleteProfileImage(originalUsername);
+        } else {
+            if (newProfileImage != null) { // If the user isn't changing his username, but he has a new profile image, we save it and delete the old one.
+                saveProfileImageMultipartFile(userByUsername, newProfileImage); // this method will delete the old profile image if it exists and save the new one.
+            }
+        }
+       return userRepository.save(userByUsername);
+*/
     }
 
     @Override
@@ -176,7 +205,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
-    public void updatePassword(String username, String currentPassword, String newPassword) throws UsernameNotFoundException, PasswordNotMatchException {
+    public void updatePassword(String username, String currentPassword, String newPassword) throws
+            UsernameNotFoundException, PasswordNotMatchException {
         User user = userRepository.findByUsername(username);
         if (user == null) throw new UsernameNotFoundException(NO_USER_FOUND_BY_USERNAME + username);
         if (!passwordEncoder.matches(currentPassword, user.getPassword()))
@@ -186,7 +216,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
-    public void updateEmail(String username, String currentPassword, String newEmail) throws UsernameNotFoundException, PasswordNotMatchException, EmailExistException {
+    public void updateEmail(String username, String currentPassword, String newEmail) throws
+            UsernameNotFoundException, PasswordNotMatchException, EmailExistException {
         User user = userRepository.findByUsername(username);
         if (user == null) throw new UsernameNotFoundException(NO_USER_FOUND_BY_USERNAME + username);
         if (!passwordEncoder.matches(currentPassword, user.getPassword()))

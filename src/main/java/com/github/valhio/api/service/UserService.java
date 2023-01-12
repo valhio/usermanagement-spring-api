@@ -23,7 +23,7 @@ public interface UserService {
 
     Collection<User> getUsers();
 
-    User update(String username, User user) throws UsernameExistException, EmailExistException;
+    User update(User newUser, MultipartFile newProfileImage, String originalUsername) throws UsernameExistException, EmailExistException, IOException, NotAnImageFileException;
 
     void delete(Long id);
 
