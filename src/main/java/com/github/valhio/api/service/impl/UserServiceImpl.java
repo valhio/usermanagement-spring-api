@@ -322,9 +322,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         return Base64.getEncoder().encodeToString(username.getBytes(StandardCharsets.UTF_8));
     }
 
-    private String getTemporaryProfileImageUrl(String firstName) {
-        return "https://robohash.org/" + firstName + "?set=set3";
-//        return ServletUriComponentsBuilder.fromCurrentContextPath().path(DEFAULT_USER_IMAGE_PATH + firstName).toUriString();
+    private String getTemporaryProfileImageUrl(String firstName, String lastName) {
+        return "https://ui-avatars.com/api/?name=" + firstName + "+" + lastName + "&background=random&size=256";
     }
 
     private String encodePassword(String password) {
