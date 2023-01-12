@@ -1,9 +1,11 @@
 package com.github.valhio.api.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.valhio.api.domain.HttpResponse;
 import com.github.valhio.api.enumeration.Role;
 import com.github.valhio.api.exception.ExceptionHandling;
 import com.github.valhio.api.exception.domain.EmailExistException;
+import com.github.valhio.api.exception.domain.NotAnImageFileException;
 import com.github.valhio.api.exception.domain.PasswordNotMatchException;
 import com.github.valhio.api.exception.domain.UsernameExistException;
 import com.github.valhio.api.model.User;
@@ -73,8 +75,10 @@ public class UserController extends ExceptionHandling {
     }
 
     @PostMapping(path = "/add")
-    public ResponseEntity<HttpResponse> addNewUser(@RequestPart("user") User user, @RequestPart("profileImage") MultipartFile profileImage) throws UsernameExistException, EmailExistException, IllegalArgumentException, IOException {
-        User registered = userService.addNewUser(user, profileImage);
+    public ResponseEntity<HttpResponse> addNewUser(@RequestPart(value = "profileImage") MultipartFile profileImage, @RequestParam String user) throws UsernameExistException, EmailExistException, IllegalArgumentException, IOException, NotAnImageFileException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        User newUser = objectMapper.readValue(user, User.class);
+        User registered = userService.addNewUser(newUser, profileImage);
         return ResponseEntity.ok(HttpResponse.builder()
                 .timeStamp(new Date())
                 .data(Map.of("user", registered))

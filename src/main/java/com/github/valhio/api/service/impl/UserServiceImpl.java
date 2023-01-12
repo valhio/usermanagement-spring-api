@@ -2,6 +2,7 @@ package com.github.valhio.api.service.impl;
 
 import com.github.valhio.api.enumeration.Role;
 import com.github.valhio.api.exception.domain.EmailExistException;
+import com.github.valhio.api.exception.domain.NotAnImageFileException;
 import com.github.valhio.api.exception.domain.PasswordNotMatchException;
 import com.github.valhio.api.exception.domain.UsernameExistException;
 import com.github.valhio.api.model.User;
@@ -10,7 +11,10 @@ import com.github.valhio.api.repository.UserRepository;
 import com.github.valhio.api.service.LoginAttemptService;
 import com.github.valhio.api.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tomcat.util.http.fileupload.FileUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -20,21 +24,24 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.github.valhio.api.constant.FileConstant.DIRECTORY_CREATED;
+import static com.github.valhio.api.constant.FileConstant.USER_FOLDER;
 import static com.github.valhio.api.constant.FileConstant.*;
-import static com.github.valhio.api.constant.UserImplConstant.USER_FOLDER;
 import static com.github.valhio.api.constant.UserImplConstant.*;
 import static com.github.valhio.api.enumeration.Role.ROLE_SUPER_ADMIN;
 import static com.github.valhio.api.enumeration.Role.ROLE_USER;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import static org.springframework.http.MediaType.*;
 
 @Slf4j
 @Transactional
@@ -91,7 +98,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         user.setNotLocked(true);
         user.setRole(Objects.equals(user.getEmail(), "a@a.com") ? ROLE_SUPER_ADMIN : ROLE_USER);
         user.setAuthorities(user.getRole().getAuthorities());
-        user.setProfileImageUrl(getTemporaryProfileImageUrl(user.getFirstName()));
+        user.setProfileImageUrl(getTemporaryProfileImageUrl(user.getFirstName(), user.getLastName()));
         return userRepository.save(user);
     }
 
@@ -101,17 +108,14 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
-    public User addNewUser(User user, MultipartFile profileImage) throws UsernameExistException, EmailExistException, IOException {
+    public User addNewUser(User user, MultipartFile profileImage) throws UsernameExistException, EmailExistException, IOException, NotAnImageFileException {
         validateUsername(user.getUsername());
         validateEmail(user.getEmail());
         user.setUserId(UUID.randomUUID().toString().concat("-" + LocalDateTime.now().getNano()));
         user.setPassword(encodePassword(user.getPassword()));
         user.setCreatedAt(LocalDateTime.now());
-        user.setActive(true);
-        user.setNotLocked(true);
-        user.setRole(user.getRole() == null ? ROLE_USER : user.getRole());
         user.setAuthorities(user.getRole().getAuthorities());
-        saveProfileImage(user, profileImage);
+        saveProfileImageMultipartFile(user, profileImage);
         return userRepository.save(user);
     }
 
@@ -149,11 +153,11 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
-    public void updateProfileImage(String username, MultipartFile profileImage) throws UsernameExistException, IOException {
+    public void updateProfileImage(String username, MultipartFile profileImage) throws
+            UsernameExistException, IOException, NotAnImageFileException {
         validateUsername(username);
         User user = userRepository.findByUsername(username);
-        saveProfileImage(user, profileImage);
-
+        saveProfileImageMultipartFile(user, profileImage);
     }
 
     @Override
@@ -167,18 +171,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
-    public byte[] getProfileImage(String username) {
-        User user = userRepository.findByUsername(username);
-        if (user == null) throw new UsernameNotFoundException(NO_USER_FOUND_BY_USERNAME + username);
-        Path path = Paths.get(user.getProfileImageUrl());
-        if (Files.exists(path)) {
-            try {
-                return Files.readAllBytes(path);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return new byte[0];
+    public byte[] getProfileImage(String username, String fileName) throws IOException {
+        return Files.readAllBytes(Paths.get(USER_FOLDER + username + FORWARD_SLASH + fileName));
     }
 
     @Override
@@ -229,50 +223,65 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         return userRepository.findAllByRole(Role.valueOf(role.toUpperCase()));
     }
 
-    private void saveProfileImage(User user, MultipartFile profileImage) throws IOException, UsernameExistException {
-//        if (profileImage != null) {
-//            Path userFolder = Paths.get(USER_FOLDER + user.getUsername()).toAbsolutePath().normalize(); // Ex.: /home/user/user-api/users/*username*
-//
-//            if (!Files.exists(userFolder)) {
-//                try {
-//                    Files.createDirectories(userFolder);
-//                    log.info(DIRECTORY_CREATED + userFolder);
-//                } catch (IOException e) {
-//                    log.error(EXCEPTION_OCCURRED_WHILE_CREATING_DIRECTORY + userFolder);
-//                }
-//            }
-//
-//            // Ex.: /home/user/user-api/users/*username*.png
-//            Files.deleteIfExists(Paths.get(userFolder + user.getUsername() + DOT + JPG_EXTENSION));
-//            // .copy(source, target, options) method copies the file from the source to the destination.
-//            // userFolder.resolve(user.getUsername() + DOT + JPG_EXTENSION) method returns the path of the file. Ex.: /home/user/user-api/users/*username*.png
-//            Files.copy(profileImage.getInputStream(), userFolder.resolve(user.getUsername() + DOT + JPG_EXTENSION), REPLACE_EXISTING);
-//            user.setProfileImageUrl(getProfileImageUrl(user.getUsername()));
-//            userRepository.save(user);
-//            log.info(FILE_SAVED_IN_FILE_SYSTEM + profileImage.getOriginalFilename());
-//        }
-
-        // Simplified version of the method
+    private void saveProfileImageMultipartFile(User user, MultipartFile profileImage) throws
+            IOException, NotAnImageFileException {
         if (profileImage != null) {
-            Path userFolder = Paths.get(USER_FOLDER + user.getUsername()).toAbsolutePath().normalize(); //
-            if (!Files.exists(userFolder)) Files.createDirectories(userFolder);
+            if (!Arrays.asList(IMAGE_JPEG_VALUE, IMAGE_PNG_VALUE, IMAGE_GIF_VALUE).contains(profileImage.getContentType())) {
+                throw new NotAnImageFileException(profileImage.getOriginalFilename() + NOT_AN_IMAGE_FILE);
+            }
+            Path userFolder = Paths.get(USER_FOLDER + user.getUsername()).toAbsolutePath().normalize();
+            if (!Files.exists(userFolder)) {
+                Files.createDirectories(userFolder);
+                log.info(DIRECTORY_CREATED + userFolder);
+            }
             Files.deleteIfExists(Paths.get(userFolder + user.getUsername() + DOT + JPG_EXTENSION));
-            Files.copy(profileImage.getInputStream(), userFolder.resolve(user.getUsername() + DOT + JPG_EXTENSION), StandardCopyOption.REPLACE_EXISTING);
-            user.setProfileImageUrl(getProfileImageUrl(user.getUsername()));
+            Files.copy(profileImage.getInputStream(), userFolder.resolve(user.getUsername() + DOT + JPG_EXTENSION), REPLACE_EXISTING);
+            user.setProfileImageUrl(setProfileImageUrl(user.getUsername()));
             userRepository.save(user);
-        } else {
-            // If the user doesn't upload a profile image, we set the default profile image
-            user.setProfileImageUrl(getTemporaryProfileImageUrl(user.getUsername()));
+            log.info(FILE_SAVED_IN_FILE_SYSTEM + profileImage.getOriginalFilename());
         }
     }
 
-    private String getProfileImageUrl(String username) throws UsernameExistException {
-        validateUsername(username);
+    private void saveProfileImageFile(User user, File profileImage) throws IOException {
+        if (profileImage != null) {
+            Path userFolder = Paths.get(USER_FOLDER + user.getUsername()).toAbsolutePath().normalize();
+            if (!Files.exists(userFolder)) {
+                try {
+                    Files.createDirectories(userFolder);
+                    log.info(DIRECTORY_CREATED + userFolder);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            Files.deleteIfExists(Paths.get(userFolder + user.getUsername() + DOT + JPG_EXTENSION));
+            Files.copy(profileImage.toPath(), userFolder.resolve(user.getUsername() + DOT + JPG_EXTENSION), REPLACE_EXISTING);
+            user.setProfileImageUrl(setProfileImageUrl(user.getUsername()));
+            userRepository.save(user);
+            log.info(FILE_SAVED_IN_FILE_SYSTEM + profileImage.getName());
+        }
+    }
 
-        // Ex.: http://localhost:8080/api/v1/user/image/*username*/*username*.png
-        return ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path(USER_IMAGE_PATH + username + FORWARD_SLASH + username + DOT + JPG_EXTENSION)
-                .toUriString();
+    @NotNull
+    private MockMultipartFile getProfileImageAsMultipartFile(String originalUsername) throws IOException {
+        return new MockMultipartFile(
+                originalUsername + DOT + JPG_EXTENSION,
+                originalUsername + DOT + JPG_EXTENSION,
+                "image/png",
+                Files.readAllBytes(Paths.get(USER_FOLDER + originalUsername + FORWARD_SLASH + originalUsername + DOT + JPG_EXTENSION)));
+    }
+
+    private void deleteProfileImage(String username) {
+        Path userFolder = Paths.get(USER_FOLDER + username).toAbsolutePath().normalize();
+        try {
+            FileUtils.deleteDirectory(new File(userFolder.toString()));
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private String setProfileImageUrl(String username) {
+        return ServletUriComponentsBuilder.fromCurrentContextPath().path(USER_IMAGE_PATH + username + FORWARD_SLASH
+                + username + DOT + JPG_EXTENSION).toUriString();
     }
 
     private String encodeUsername(String username) {

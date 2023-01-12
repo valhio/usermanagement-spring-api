@@ -1,5 +1,7 @@
 package com.github.valhio.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.valhio.api.enumeration.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -48,6 +50,8 @@ public class User implements Serializable {
     //    @Length(min = 10, message = "Password should be atleast 10 number long")
     private String phone;
 
+    private String address;
+
     private Boolean acceptedTerms;
 
     private String profileImageUrl;
@@ -63,7 +67,11 @@ public class User implements Serializable {
     private int failedLoginAttempts;
     private LocalDateTime lastLoginDate;
     private LocalDateTime lastLoginDateDisplay;
+
+    @JsonProperty(value = "isActive")
     private boolean isActive;
+
+    @JsonProperty(value = "isNotLocked")
     private boolean isNotLocked; // Is the user's account verified via email?
 
     @Enumerated(EnumType.STRING)

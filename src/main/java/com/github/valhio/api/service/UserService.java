@@ -2,6 +2,7 @@ package com.github.valhio.api.service;
 
 import com.github.valhio.api.enumeration.Role;
 import com.github.valhio.api.exception.domain.EmailExistException;
+import com.github.valhio.api.exception.domain.NotAnImageFileException;
 import com.github.valhio.api.exception.domain.PasswordNotMatchException;
 import com.github.valhio.api.exception.domain.UsernameExistException;
 import com.github.valhio.api.model.User;
@@ -14,7 +15,7 @@ import java.util.Set;
 public interface UserService {
     public User register(User user) throws UsernameExistException, EmailExistException, IllegalArgumentException;
 
-    User addNewUser(User user, MultipartFile profileImage) throws UsernameExistException, EmailExistException, IOException;
+    User addNewUser(User user, MultipartFile profileImage) throws UsernameExistException, EmailExistException, IOException, NotAnImageFileException;
 
     User findUserByUsername(String username) throws UsernameExistException;
 
@@ -28,9 +29,9 @@ public interface UserService {
 
     void resetPassword(String email);
 
-    void updateProfileImage(String username, MultipartFile profileImage) throws UsernameExistException, IOException;
+    void updateProfileImage(String username, MultipartFile profileImage) throws UsernameExistException, IOException, NotAnImageFileException;
 
-    byte[] getProfileImage(String username);
+    byte[] getProfileImage(String username, String fileName) throws IOException;
 
     void updatePassword(String username, String currentPassword, String newPassword) throws PasswordNotMatchException;
 
