@@ -169,7 +169,10 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Override
     public void delete(Long id) {
-        userRepository.deleteById(id);
+        userRepository.findById(id).ifPresent(user -> {
+            userRepository.delete(user);
+            deleteProfileImage(user.getUsername());
+        });
     }
 
     // TODO: Implement valid Reset Password Functionality
