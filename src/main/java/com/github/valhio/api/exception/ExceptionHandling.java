@@ -5,7 +5,6 @@ import com.github.valhio.api.domain.HttpResponse;
 import com.github.valhio.api.exception.domain.*;
 import jakarta.persistence.NoResultException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,9 +14,9 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.io.IOException;
 import java.util.Date;
@@ -60,6 +59,17 @@ public class ExceptionHandling  {
 //    public ResponseEntity<HttpResponse> noHandlerFoundException(NoHandlerFoundException e) {
 //        return createHttpResponse(BAD_REQUEST, String.format("There is no mapping for this URL %s", e.getRequestURL()));
 //    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<HttpResponse> maxUploadSizeExceededException(MaxUploadSizeExceededException e) {
+        return createHttpResponse(BAD_REQUEST, "File too large. Please select a file less than 10MB");
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    // This exception is thrown when a required part of a multipart request is missing.
+    public ResponseEntity<HttpResponse> missingServletRequestPartException(MissingServletRequestPartException e) {
+        return createHttpResponse(BAD_REQUEST, e.getMessage());
+    }
 
     @ExceptionHandler(DisabledException.class)
     public ResponseEntity<HttpResponse> accountDisabledException(DisabledException e) {
