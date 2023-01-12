@@ -19,7 +19,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class User implements Serializable {
+@JsonIgnoreProperties(ignoreUnknown = true) // Ignores any unknown properties that may be sent in the request
+public class User extends Auditable<String> implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(nullable = false, updatable = false)
