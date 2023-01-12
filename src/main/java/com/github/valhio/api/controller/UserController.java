@@ -163,7 +163,7 @@ public class UserController extends ExceptionHandling {
 
     @PostMapping("/update-profile-image")
     public ResponseEntity<HttpResponse> updateProfileImage(@RequestParam("username") String username,
-                                                           @RequestParam("profileImage") MultipartFile profileImage) throws IOException, UsernameExistException {
+                                                           @RequestParam("profileImage") MultipartFile profileImage) throws IOException, UsernameExistException, NotAnImageFileException {
         userService.updateProfileImage(username, profileImage);
         return ResponseEntity.ok(HttpResponse.builder()
                 .timeStamp(new Date())
@@ -174,9 +174,9 @@ public class UserController extends ExceptionHandling {
                 .build());
     }
 
-    @GetMapping(path = "/image/{username}", produces = IMAGE_JPEG_VALUE)
-    public byte[] getProfileImage(@PathVariable("username") String username) {
-        return userService.getProfileImage(username);
+    @GetMapping(path = "/image/{username}/{fileName}", produces = IMAGE_JPEG_VALUE)
+    public byte[] getProfileImage(@PathVariable("username") String username, @PathVariable String fileName) throws IOException {
+        return userService.getProfileImage(username, fileName);
     }
 
     @GetMapping(path = "/image/profile/{username}", produces = IMAGE_JPEG_VALUE)
