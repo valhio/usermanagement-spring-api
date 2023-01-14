@@ -25,6 +25,7 @@ public class User extends Auditable<String> implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(nullable = false, updatable = false)
     private Long id;
+
     private String userId;
 
     private String username;

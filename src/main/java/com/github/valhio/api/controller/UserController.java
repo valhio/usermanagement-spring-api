@@ -149,6 +149,18 @@ public class UserController extends ExceptionHandling {
                 .build());
     }
 
+    @DeleteMapping("/delete/userId/{userId}")
+    @PreAuthorize("hasAnyAuthority('DELETE')")
+    public ResponseEntity<HttpResponse> deleteByUserId(@PathVariable("userId") String userId) {
+        userService.deleteByUserId(userId);
+        return ResponseEntity.ok(HttpResponse.builder()
+                .timeStamp(new Date())
+                .message("User deleted successfully")
+                .status(HttpStatus.OK)
+                .statusCode(HttpStatus.OK.value())
+                .build());
+    }
+
     @GetMapping("/reset-password/{email}")
     public ResponseEntity<HttpResponse> resetPassword(@PathVariable("email") String email) {
         userService.resetPassword(email);
