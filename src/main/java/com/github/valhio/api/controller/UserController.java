@@ -26,10 +26,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.github.valhio.api.constant.FileConstant.TEMP_PROFILE_IMAGE_BASE_URL;
 import static com.github.valhio.api.constant.SecurityConstant.JWT_TOKEN_HEADER;
@@ -113,10 +110,12 @@ public class UserController extends ExceptionHandling {
     }
 
     @GetMapping("/list")
-    public ResponseEntity<HttpResponse> getUsers() {
+    public ResponseEntity<HttpResponse> getUsers(@RequestParam Optional<String> keyword,
+                                                 @RequestParam Optional<Integer> page,
+                                                 @RequestParam Optional<Integer> size) {
         return ResponseEntity.ok(HttpResponse.builder()
                 .timeStamp(new Date())
-                .data(Map.of("users", userService.getUsers()))
+                .data(Map.of("users", userService.getUsers(keyword.orElse(""), page.orElse(0), size.orElse(10)).getContent()))
                 .message("Users retrieved successfully")
                 .status(HttpStatus.OK)
                 .statusCode(HttpStatus.OK.value())

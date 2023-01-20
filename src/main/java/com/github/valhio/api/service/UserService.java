@@ -6,6 +6,7 @@ import com.github.valhio.api.exception.domain.NotAnImageFileException;
 import com.github.valhio.api.exception.domain.PasswordNotMatchException;
 import com.github.valhio.api.exception.domain.UsernameExistException;
 import com.github.valhio.api.model.User;
+import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -21,7 +22,7 @@ public interface UserService {
 
     User findUserByEmail(String email);
 
-    Collection<User> getUsers();
+    Page<User> getUsers(String keyword, int page, int size);
 
     User update(User newUser, MultipartFile newProfileImage, String originalUsername) throws UsernameExistException, EmailExistException, IOException, NotAnImageFileException;
 
