@@ -16,13 +16,14 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import static com.github.valhio.api.constant.SecurityConstant.PUBLIC_URLS;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
 /*
-*   This class is responsible for configuring the security of the application.
-* */
+ *   This class is responsible for configuring the security of the application.
+ * */
 @Configuration
 @EnableWebSecurity // This annotation enables the Spring Security module.
 @EnableMethodSecurity() // This annotation is responsible for enabling the use of the @PreAuthorize annotation.
@@ -60,7 +61,15 @@ public class SecurityConfiguration {
                 .addFilterBefore(jwtAuthorizationFilter, AuthorizationFilter.class)
                 .authorizeHttpRequests()
                 .requestMatchers(PUBLIC_URLS).permitAll()
-                .anyRequest().authenticated();
+                .anyRequest().authenticated()
+                .and()
+                .logout().logoutUrl("/logout")
+                .invalidateHttpSession(true)
+                .clearAuthentication(true)
+                .logoutRequestMatcher(new AntPathRequestMatcher("/logout")) // logoutRequestMatcher(new AntPathRequestMatcher("/logout")) is used to specify the URL to logout
+                .logoutSuccessUrl("/login").permitAll()
+                .and()
+                .exceptionHandling().accessDeniedPage("/accessDenied");
         return http.build();
     }
 
