@@ -95,4 +95,9 @@ public class JWTTokenProvider {
     public String getSubject(String token) {
         return getJWTVerifier().verify(token).getSubject();
     }
+
+    public void invalidateToken(String token) {
+        // Invalidate the token by setting the expiration date to the current date
+        getJWTVerifier().verify(token).getExpiresAt().before(new Date());
+    }
 }

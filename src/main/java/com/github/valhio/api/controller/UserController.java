@@ -12,6 +12,7 @@ import com.github.valhio.api.model.User;
 import com.github.valhio.api.model.UserPrincipal;
 import com.github.valhio.api.service.UserService;
 import com.github.valhio.api.utility.JWTTokenProvider;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -46,6 +47,13 @@ public class UserController extends ExceptionHandling {
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
+    @PostMapping("/api/logout")
+    public void logout(HttpServletRequest request) {
+        //Invalidate JWT token
+        String token = request.getHeader("Authorization").substring(7);
+        jwtTokenProvider.invalidateToken(token);
+    }
+
     @PostMapping("/register")
     public ResponseEntity<HttpResponse> register(@RequestBody User user) throws UsernameExistException, EmailExistException, IllegalArgumentException {
         User registered = userService.register(user);
@@ -65,7 +73,6 @@ public class UserController extends ExceptionHandling {
         User logged = userService.findUserByUsername(user.getUsername());
         UserPrincipal userPrincipal = new UserPrincipal(logged);
         HttpHeaders jwtHeader = getJwtHeader(userPrincipal);
-
         return ResponseEntity.ok()
                 .headers(jwtHeader)
                 .body(logged);

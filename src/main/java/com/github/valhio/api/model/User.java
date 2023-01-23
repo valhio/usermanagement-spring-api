@@ -35,7 +35,7 @@ public class User extends Auditable<String> implements Serializable {
     private String username;
 
     @NotNull(message = "Password cannot be empty")
-    @Length(min = 7, message = "Password should be atleast 7 characters long")
+    @Length(min = 7, message = "Password should be at least 7 characters long")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
@@ -54,7 +54,7 @@ public class User extends Auditable<String> implements Serializable {
     @Email(message = "Please enter a valid email address")
     private String email;
 
-    @Length(min = 10, message = "Password should be at least 10 number long")
+    @Length(min = 10, message = "Phone should be at least 10 number long")
     private String phone;
 
     private String address;
