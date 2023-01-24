@@ -39,6 +39,8 @@ public class JWTTokenProvider {
                 .withIssuedAt(new Date()) // When was the token issued
                 .withSubject(userPrincipal.getUsername()) // What is the subject of the token, in this case the username (unique identifier)
                 .withArrayClaim(AUTHORITIES, claims) // What are the claims of the token, in this case, the authorities
+                .withClaim("role", userPrincipal.getRole().name())
+                .withClaim("email", userPrincipal.getEmail())
                 .withExpiresAt(new Date(System.currentTimeMillis() + EXPIRATION_TIME)) // When does the token expire
                 .sign(com.auth0.jwt.algorithms.Algorithm.HMAC512(secretKey.getBytes())); // What is the secret key used to sign the token
     }

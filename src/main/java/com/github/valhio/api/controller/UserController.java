@@ -130,6 +130,7 @@ public class UserController extends ExceptionHandling {
     }
 
     @PostMapping("/update/{originalUsername}")
+    @PreAuthorize("hasAnyAuthority('UPDATE')")
     public ResponseEntity<HttpResponse> update(@RequestPart(value = "profileImage", required = false) MultipartFile profileImage, @RequestParam String user, @PathVariable String originalUsername) throws EmailExistException, UsernameExistException, IOException, NotAnImageFileException {
         ObjectMapper objectMapper = new ObjectMapper();
         User newUser = objectMapper.readValue(user, User.class);

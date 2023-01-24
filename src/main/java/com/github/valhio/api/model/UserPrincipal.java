@@ -1,5 +1,6 @@
 package com.github.valhio.api.model;
 
+import com.github.valhio.api.enumeration.Role;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -10,12 +11,20 @@ import java.util.Arrays;
 import java.util.Collection;
 
 /*
-*   This class is used to represent the user in the application.
-* */
+ *   This class is used to represent the user in the application.
+ * */
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserPrincipal implements UserDetails {
     private User user;
+
+    public Role getRole() {
+        return user.getRole();
+    }
+
+    public String getEmail() {
+        return user.getEmail();
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
