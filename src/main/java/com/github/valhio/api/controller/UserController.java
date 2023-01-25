@@ -122,7 +122,7 @@ public class UserController extends ExceptionHandling {
                                                  @RequestParam Optional<Integer> size) {
         return ResponseEntity.ok(HttpResponse.builder()
                 .timeStamp(new Date())
-                .data(Map.of("users", userService.getUsers(keyword.orElse(""), page.orElse(0), size.orElse(10)).getContent()))
+                .data(Map.of("usersPage", userService.getUsers(keyword.orElse(""), page.orElse(0), size.orElse(10))))
                 .message("Users retrieved successfully")
                 .status(HttpStatus.OK)
                 .statusCode(HttpStatus.OK.value())
